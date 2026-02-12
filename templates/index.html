@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SkyBot — Assistant IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+
+  <header>
+    <h1>✈️ SkyBot — Assistant IA</h1>
+    <p class="subtitle">Importez un document, puis posez vos questions</p>
+    <div id="status-badge" class="badge {% if is_ready %}badge--ready{% else %}badge--empty{% endif %}">
+      {% if is_ready %}
+        ✅ Document chargé
+      {% else %}
+        ⚠️ Aucun document — importez un fichier pour commencer
+      {% endif %}
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── Upload ──────────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="upload-title">
+      <h2 id="upload-title">Importer un document</h2>
+      <p class="hint">Formats acceptés : <strong>.txt</strong> et <strong>.pdf</strong></p>
+
+      <form id="upload-form" class="form" novalidate>
+        <label for="file" class="visually-hidden">Sélectionner un fichier</label>
+        <div class="file-drop" id="file-drop">
+          <input type="file" id="file" name="file" accept=".txt,.pdf" aria-required="true" />
+          <span class="file-drop__label">Glissez un fichier ici ou <u>cliquez pour choisir</u></span>
+          <span id="file-name" class="file-name"></span>
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="save_index" name="save_index" />
+          <label for="save_index">Sauvegarder l'index sur le disque (persiste entre redémarrages)</label>
+        </div>
+
+        <button type="submit" class="btn" id="upload-btn">Importer</button>
+      </form>
+
+      <div id="upload-result" class="alert" role="alert" aria-live="polite" hidden></div>
+    </section>
+
+    <!-- ── Chat ────────────────────────────────────────────────────── -->
+    <section class="card" aria-labelledby="chat-title">
+      <h2 id="chat-title">Chat avec SkyBot</h2>
+
+      <!-- Conversation history -->
+      <div id="chat-history" class="chat-history" aria-live="polite" aria-label="Historique de la conversation"></div>
+
+      <form id="chat-form" class="form" novalidate>
+        <label for="question">Votre question</label>
+        <div class="textarea-row">
+          <textarea
+            id="question"
+            name="question"
+            rows="3"
+            placeholder="Ex : Quels sont les types d'avions utilisés à l'aéroport ?"
+            aria-required="true"
+          >{{ question if question else '' }}</textarea>
+          <button type="submit" class="btn btn--send" id="send-btn" aria-label="Envoyer">
+            <span class="btn__text">Envoyer</span>
+            <span class="btn__spinner" hidden aria-hidden="true">⏳</span>
+          </button>
+        </div>
+      </form>
+
+      <div class="chat-actions">
+        <button id="clear-btn" class="btn btn--ghost btn--sm">🗑 Effacer l'historique</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>© 2025 SkyBot — Propulsé par <a href="https://groq.com" target="_blank" rel="noopener">Groq</a> &amp; LangChain</p>
+  </footer>
+
+  <script>
+    // ── Utilities ──────────────────────────────────────────────────────────────
+
+    /** Escape HTML to safely render user-provided strings. */
+    function escHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    /** Create a chat bubble element. */
+    function createBubble(role, text) {
+      const wrap = document.createElement('div');
+      wrap.className = `bubble bubble--${role}`;
+      const inner = document.createElement('div');
+      inner.className = 'bubble__content';
+      // Preserve line breaks from the LLM response
+      inner.innerHTML = escHtml(text).replace(/\n/g, '<br>');
+      const label = document.createElement('span');
+      label.className = 'bubble__label';
+      label.textContent = role === 'user' ? 'Vous' : 'SkyBot';
+      wrap.appendChild(label);
+      wrap.appendChild(inner);
+      return wrap;
+    }
+
+    function scrollToBottom(el) {
+      el.scrollTop = el.scrollHeight;
+    }
+
+    // ── Status badge ───────────────────────────────────────────────────────────
+
+    function setReady(isReady) {
+      const badge = document.getElementById('status-badge');
+      if (isReady) {
+        badge.className = 'badge badge--ready';
+        badge.textContent = '✅ Document chargé';
+      } else {
+        badge.className = 'badge badge--empty';
+        badge.textContent = '⚠️ Aucun document — importez un fichier pour commencer';
+      }
+    }
+
+    // ── Upload form ────────────────────────────────────────────────────────────
+
+    const fileInput   = document.getElementById('file');
+    const fileNameEl  = document.getElementById('file-name');
+    const uploadResult = document.getElementById('upload-result');
+
+    fileInput.addEventListener('change', () => {
+      fileNameEl.textContent = fileInput.files[0]?.name ?? '';
+    });
+
+    document.getElementById('upload-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!fileInput.files.length) {
+        showAlert(uploadResult, 'error', 'Veuillez sélectionner un fichier.');
+        return;
+      }
+
+      const uploadBtn = document.getElementById('upload-btn');
+      uploadBtn.disabled = true;
+      uploadBtn.textContent = 'Indexation en cours…';
+      uploadResult.hidden = true;
+
+      const fd = new FormData();
+      fd.append('file', fileInput.files[0]);
+      fd.append('save_index', document.getElementById('save_index').checked ? 'true' : 'false');
+
+      try {
+        const resp = await fetch('/upload', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (data.ok) {
+          showAlert(uploadResult, 'success', data.message);
+          setReady(true);
+        } else {
+          showAlert(uploadResult, 'error', 'Erreur : ' + data.message);
+        }
+      } catch (err) {
+        showAlert(uploadResult, 'error', 'Erreur réseau : ' + err.message);
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Importer';
+      }
+    });
+
+    function showAlert(el, type, msg) {
+      el.className = `alert alert--${type}`;
+      el.textContent = msg;
+      el.hidden = false;
+    }
+
+    // ── Chat form ──────────────────────────────────────────────────────────────
+
+    const chatHistory = document.getElementById('chat-history');
+    const chatForm    = document.getElementById('chat-form');
+    const questionEl  = document.getElementById('question');
+    const sendBtn     = document.getElementById('send-btn');
+
+    // Restore Jinja-rendered answer (first load after form POST fallback)
+    {% if answer %}
+    chatHistory.appendChild(createBubble('user', {{ question | tojson }}));
+    chatHistory.appendChild(createBubble('bot', {{ answer | tojson }}));
+    scrollToBottom(chatHistory);
+    {% endif %}
+
+    chatForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const question = questionEl.value.trim();
+      if (!question) return;
+
+      // Optimistic UI
+      chatHistory.appendChild(createBubble('user', question));
+      const thinkingBubble = createBubble('bot', '…');
+      chatHistory.appendChild(thinkingBubble);
+      scrollToBottom(chatHistory);
+
+      questionEl.value = '';
+      sendBtn.disabled = true;
+      sendBtn.querySelector('.btn__text').hidden = true;
+      sendBtn.querySelector('.btn__spinner').hidden = false;
+
+      const fd = new FormData();
+      fd.append('question', question);
+
+      try {
+        const resp = await fetch('/ask', {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' },
+          body: fd,
+        });
+
+        // /ask returns HTML by default; we need JSON — check Accept header support
+        // If the server returns JSON, use it; otherwise parse the HTML response.
+        const contentType = resp.headers.get('content-type') ?? '';
+        let answer;
+        if (contentType.includes('application/json')) {
+          const data = await resp.json();
+          answer = data.answer;
+        } else {
+          // Fallback: parse the rendered HTML to extract the answer
+          const html = await resp.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const answerEl = doc.querySelector('#answer-text');
+          answer = answerEl ? answerEl.textContent : 'Réponse indisponible.';
+        }
+
+        thinkingBubble.remove();
+        chatHistory.appendChild(createBubble('bot', answer));
+        scrollToBottom(chatHistory);
+
+      } catch (err) {
+        thinkingBubble.remove();
+        chatHistory.appendChild(createBubble('bot', '❌ Erreur réseau : ' + err.message));
+        scrollToBottom(chatHistory);
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.querySelector('.btn__text').hidden = false;
+        sendBtn.querySelector('.btn__spinner').hidden = true;
+      }
+    });
+
+    // Send on Ctrl/Cmd + Enter
+    questionEl.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        chatForm.requestSubmit();
+      }
+    });
+
+    // ── Clear history ──────────────────────────────────────────────────────────
+
+    document.getElementById('clear-btn').addEventListener('click', async () => {
+      if (!confirm('Effacer tout l\'historique de la conversation ?')) return;
+      try {
+        await fetch('/clear-history', { method: 'POST' });
+      } catch (_) { /* best-effort */ }
+      chatHistory.innerHTML = '';
+    });
+  </script>
+</body>
+</html>

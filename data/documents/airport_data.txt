@@ -1,0 +1,65 @@
+Aéroport International Al-Madina — Données de vols et avions
+1. Statistiques générales (année 2024)
+Mois	Nombre de vols	Passagers totaux	Volume de fret (tonnes)	Retards moyens (min)
+Janvier	3 450	520 000	1 200	18
+Février	3 210	480 000	1 100	22
+Mars	3 670	580 000	1 350	20
+Avril	3 900	620 000	1 420	15
+Mai	4 100	650 000	1 500	19
+Juin	4 300	700 000	1 600	25
+Juillet	4 500	720 000	1 700	28
+Août	4 200	680 000	1 550	23
+Septembre	3 800	600 000	1 400	20
+Octobre	3 900	620 000	1 450	18
+Novembre	3 650	590 000	1 300	22
+Décembre	3 900	640 000	1 500	21
+
+2. Vols majeurs (extrait mensuel)
+Numéro de vol	Compagnie aérienne	Origine	Destination	Type d'avion	Capacité passagers	Heure départ	Heure arrivée	Statut
+AM101	Al-Madina Airlines	Riyad (RUH)	Paris (CDG)	Boeing 777-300ER	350	08:30	14:15	À l’heure
+AM205	Al-Madina Airlines	Casablanca (CMN)	Dubaï (DXB)	Airbus A320	180	10:00	18:30	Retard 45 min
+EM350	Emirates	Dubaï (DXB)	Al-Madina (MAD)	Airbus A380	525	13:00	18:00	Annulé
+QR405	Qatar Airways	Doha (DOH)	Al-Madina (MAD)	Boeing 787 Dreamliner	240	16:45	21:00	À l’heure
+AF202	Air France	Paris (CDG)	Al-Madina (MAD)	Airbus A330	280	19:00	23:30	À l’heure
+
+3. Types d’avions et fréquence d’utilisation
+Type d’avion	Nombre dans la flotte	Capacité moyenne (passagers)	Usage principal
+Boeing 777-300ER	10	350	Long-courrier
+Airbus A320	15	180	Court et moyen-courrier
+Airbus A380	5	525	Très long-courrier
+Boeing 787 Dreamliner	8	240	Long-courrier
+Embraer E190	7	100	Court-courrier
+
+4. Données passagers par vol (exemple)
+Vol	Passagers embarqués	Passagers débarqués	Bagages traités	Pourcentage remplissage
+AM101	348	346	340	99%
+AM205	175	172	170	97%
+QR405	230	235	225	96%
+AF202	278	275	270	99%
+
+5. Gestion des retards (causes principales en %)
+Cause	Pourcentage des retards
+Conditions météorologiques	40%
+Problèmes techniques	25%
+Contrôle aérien congestion	20%
+Retards passagers	10%
+Autres	5%
+
+6. Fret aéroportuaire
+Type de fret	Volume mensuel (tonnes)	Pourcentage total
+Marchandises périssables	300	20%
+Produits électroniques	400	27%
+Produits pharmaceutiques	200	13%
+Textiles et vêtements	250	17%
+Divers	350	23%
+
+Détails supplémentaires
+L’aéroport dessert plus de 50 compagnies aériennes.
+
+Les heures de pointe sont entre 7h00 et 10h00 puis entre 17h00 et 20h00.
+
+La piste principale supporte jusqu’à 70 décollages/atterrissages par heure.
+
+Un nouveau terminal VIP est en construction pour une ouverture en décembre 2025.
+
+Le centre de maintenance dispose de 3 hangars spécialisés pour Airbus, Boeing et avions régionaux.
