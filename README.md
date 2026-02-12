@@ -220,5 +220,5 @@ MIT License
 
 ## 👩‍💻 Author
 
-**Wiame Rabie**  
+**Wiam Rabie**  
 AI & Data Engineering Student  
