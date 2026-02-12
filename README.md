@@ -227,6 +227,7 @@ MIT License
 ### API Documentation (Swagger UI)
 ![Swagger UI](docs/swagger.png)
 
+--- 
 
 ## 👩‍💻 Author
 
