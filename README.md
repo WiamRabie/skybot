@@ -217,6 +217,16 @@ http://localhost:8000/docs
 MIT License
 
 ---
+## 📸 Screenshots
+
+### Web Interface — Chatbot
+![SkyBot UI 1](docs/ui_1.png)
+
+![SkyBot UI 2](docs/ui_2.png)
+
+### API Documentation (Swagger UI)
+![Swagger UI](docs/swagger.png)
+
 
 ## 👩‍💻 Author
 
